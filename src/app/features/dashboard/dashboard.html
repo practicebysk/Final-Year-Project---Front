@@ -1,0 +1,125 @@
+<app-header />
+<main class="mx-auto max-w-6xl p-4 sm:p-8">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold">Dashboard</h1>
+      <p class="text-sm text-muted">Manage your AI-generated websites.</p>
+    </div>
+    <a routerLink="/projects/new" class="btn btn-primary">+ New project</a>
+  </div>
+
+  @if (notice(); as n) {
+    <p class="mb-4 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+       [class]="n.error ? 'border-danger/40 bg-danger/10 text-danger' : 'border-success/40 bg-success/10 text-success'"
+       [attr.role]="n.error ? 'alert' : 'status'">
+      <span>{{ n.text }}</span>
+      <button type="button" class="text-xs underline" (click)="notice.set(null)">Dismiss</button>
+    </p>
+  }
+
+  @if (loading()) {
+    <div class="mb-8 grid gap-4 sm:grid-cols-3">
+      @for (n of [1, 2, 3]; track n) {
+        <div class="h-24 animate-pulse rounded-xl border border-border bg-card"></div>
+      }
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (n of [1, 2, 3]; track n) {
+        <div class="h-64 animate-pulse rounded-xl border border-border bg-card"></div>
+      }
+    </div>
+  } @else if (loadError()) {
+    <div class="rounded-xl border border-danger/40 bg-danger/10 p-8 text-center" role="alert">
+      <p class="text-danger">{{ loadError() }}</p>
+      <button type="button" class="btn btn-ghost mt-4" (click)="load()">Try again</button>
+    </div>
+  } @else if (total() === 0) {
+    <div class="rounded-xl border border-dashed border-border p-10 text-center">
+      <p class="font-medium">No projects yet</p>
+      <p class="mt-1 text-sm text-muted">Describe a business and let the AI build its website.</p>
+      <a routerLink="/projects/new" class="btn btn-primary mt-4">Create your first project</a>
+    </div>
+  } @else {
+    <!-- Overview -->
+    <section class="mb-8 grid gap-4 sm:grid-cols-3" aria-label="Overview">
+      <div class="rounded-xl border border-border bg-card p-4">
+        <p class="text-xs uppercase tracking-wide text-muted">Total projects</p>
+        <p class="mt-1 text-3xl font-semibold">{{ total() }}</p>
+      </div>
+      <div class="rounded-xl border border-border bg-card p-4">
+        <p class="text-xs uppercase tracking-wide text-muted">Edited this week</p>
+        <p class="mt-1 text-3xl font-semibold">{{ editedThisWeek() }}</p>
+      </div>
+      <div class="min-w-0 rounded-xl border border-border bg-card p-4">
+        <p class="text-xs uppercase tracking-wide text-muted">Last edited</p>
+        <p class="mt-2 truncate text-lg font-semibold" [title]="recent()[0].name">{{ recent()[0].name }}</p>
+        <p class="text-xs text-muted">{{ recent()[0].updatedAt | date: 'medium' }}</p>
+      </div>
+    </section>
+
+    <!-- Recent projects (hidden while searching) -->
+    @if (!searching()) {
+      <section class="mb-8" aria-labelledby="recent-heading">
+        <h2 id="recent-heading" class="mb-3 text-sm font-semibold">Recent projects</h2>
+        <ul class="divide-y divide-border rounded-xl border border-border bg-card">
+          @for (p of recent(); track p.id) {
+            <li class="flex items-center gap-3 p-3">
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium">{{ p.name }}</p>
+                <p class="truncate text-xs text-muted">{{ p.businessName }} · {{ p.businessType }} · {{ p.updatedAt | date: 'medium' }}</p>
+              </div>
+              <a [routerLink]="['/projects', p.id]" class="btn btn-ghost btn-sm shrink-0">Open</a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- All projects -->
+    <section aria-labelledby="all-heading">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 id="all-heading" class="text-sm font-semibold">
+          All projects
+          <span class="font-normal text-muted">({{ searching() ? filtered().length + ' of ' + total() : total() }})</span>
+        </h2>
+        <input #box class="input sm:max-w-xs" type="search" placeholder="Search by project, business or type…"
+               aria-label="Search projects" [value]="query()" (input)="query.set(box.value)" />
+      </div>
+
+      @if (filtered().length === 0) {
+        <div class="rounded-xl border border-dashed border-border p-10 text-center">
+          <p class="font-medium">No projects match “{{ query().trim() }}”</p>
+          <button type="button" class="btn btn-ghost mt-4" (click)="query.set('')">Clear search</button>
+        </div>
+      } @else {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          @for (p of filtered(); track p.id) {
+            <app-project-card [project]="p" [duplicating]="duplicatingId() === p.id"
+                              (renameRequested)="askRename($event)"
+                              (duplicateRequested)="duplicate($event)"
+                              (deleteRequested)="askDelete($event)" />
+          }
+        </div>
+      }
+    </section>
+  }
+</main>
+
+@if (pendingDelete(); as p) {
+  <app-confirm-dialog
+    title="Delete project?"
+    [message]="'“' + p.name + '” and its code will be permanently deleted. This cannot be undone.'"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()" />
+}
+
+@if (renaming(); as p) {
+  <app-rename-dialog
+    [currentName]="p.name"
+    [busy]="renameBusy()"
+    [error]="renameError()"
+    (renamed)="confirmRename($event)"
+    (cancelled)="cancelRename()" />
+}

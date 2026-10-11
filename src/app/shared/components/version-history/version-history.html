@@ -1,0 +1,91 @@
+<div class="fixed inset-0 z-50 grid place-items-center bg-black/60 p-2 sm:p-4" (click)="close()">
+  <div role="dialog" aria-modal="true" aria-labelledby="history-title"
+       class="flex h-[90dvh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
+       (click)="$event.stopPropagation()">
+
+    <header class="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
+      <h2 id="history-title" class="text-lg font-semibold">Version history</h2>
+      <button type="button" class="btn btn-ghost btn-sm" [disabled]="restoring()" (click)="close()">Close</button>
+    </header>
+
+    @if (loading()) {
+      <p class="p-6 text-sm text-muted">Loading versions…</p>
+    } @else if (loadError()) {
+      <div class="p-6 text-center" role="alert">
+        <p class="text-sm text-danger">{{ loadError() }}</p>
+        <button type="button" class="btn btn-ghost mt-3" (click)="load()">Try again</button>
+      </div>
+    } @else {
+      <div class="flex min-h-0 flex-1 flex-col md:flex-row">
+
+        <!-- Version list, newest first -->
+        <ul class="max-h-44 shrink-0 divide-y divide-border overflow-y-auto border-b border-border md:max-h-none md:w-72 md:border-b-0 md:border-r" role="list">
+          @for (v of versions(); track v.id) {
+            <li>
+              <button type="button" class="block w-full px-4 py-3 text-left text-sm transition"
+                      [class]="v.versionNumber === selectedNumber() ? 'bg-primary/20' : 'hover:bg-app'"
+                      [attr.aria-current]="v.versionNumber === selectedNumber() ? 'true' : null"
+                      (click)="select(v)">
+                <span class="flex items-center gap-2">
+                  <span class="font-medium">Version {{ v.versionNumber }}</span>
+                  @if (v.versionNumber === latestNumber()) {
+                    <span class="rounded-full bg-success/20 px-2 py-0.5 text-[10px] text-success">Latest</span>
+                  }
+                  <span class="ml-auto rounded bg-app px-1.5 py-0.5 text-[10px] uppercase text-secondary">{{ sourceLabel(v.source) }}</span>
+                </span>
+                <span class="mt-1 line-clamp-2 block text-muted">{{ v.label }}</span>
+                <span class="mt-1 block text-xs text-muted">{{ v.createdAt | date: 'medium' }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+
+        <!-- Selected version -->
+        <section class="flex min-h-0 min-w-0 flex-1 flex-col">
+          @if (selected(); as s) {
+            <div class="shrink-0 border-b border-border p-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="min-w-0 flex-1 text-sm">
+                  <span class="font-medium">Version {{ s.versionNumber }}</span>
+                  <span class="text-muted"> · {{ s.label }}</span>
+                </p>
+                @if (!confirming()) {
+                  <button type="button" class="btn btn-primary btn-sm" (click)="confirming.set(true)">Restore this version</button>
+                }
+              </div>
+
+              @if (confirming()) {
+                <div class="mt-3 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm">
+                  <p>
+                    This creates a <strong>new version</strong> with the code of version {{ s.versionNumber }}. No version is deleted,
+                    and any saved edits that are not in the history yet are kept as their own version first.
+                    @if (hasUnsavedChanges()) {
+                      <strong> Your unsaved changes in the editor will be replaced.</strong>
+                    }
+                  </p>
+                  <div class="mt-3 flex gap-2">
+                    <button type="button" class="btn btn-primary btn-sm" [disabled]="restoring()" (click)="restore()">
+                      {{ restoring() ? 'Restoring…' : 'Confirm restore' }}
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm" [disabled]="restoring()" (click)="confirming.set(false)">Cancel</button>
+                  </div>
+                </div>
+              }
+
+              @if (restoreError()) {
+                <p class="mt-3 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">{{ restoreError() }}</p>
+              }
+            </div>
+
+            <!-- Same sandboxed preview as the builder -->
+            <app-preview-panel class="min-h-0 flex-1" [html]="s.html" [css]="s.css" [js]="s.javascript" />
+          } @else if (detailLoading()) {
+            <p class="p-6 text-sm text-muted">Loading version…</p>
+          } @else if (detailError()) {
+            <p class="m-4 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">{{ detailError() }}</p>
+          }
+        </section>
+      </div>
+    }
+  </div>
+</div>

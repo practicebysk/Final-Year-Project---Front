@@ -1,0 +1,35 @@
+<div [class]="fullscreen() ? 'fixed inset-0 z-40 flex flex-col bg-app' : 'flex h-full flex-col'">
+  <div class="flex min-h-10 shrink-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border bg-sidebar px-3 py-1">
+    <span class="text-xs font-medium uppercase tracking-wide text-muted">
+      Live preview
+      <span class="ml-1 normal-case tracking-normal">{{ device().px ? '· ' + device().px + ' px' : '· responsive' }}</span>
+    </span>
+
+    <div class="flex flex-wrap items-center gap-1">
+      @for (d of devices; track d.label) {
+        <button type="button" class="rounded px-2 py-1 text-xs"
+                [class]="device() === d ? 'bg-primary text-white' : 'text-muted hover:text-fg'"
+                [attr.aria-pressed]="device() === d"
+                (click)="device.set(d)">{{ d.label }}</button>
+      }
+      <span class="mx-1 h-4 w-px bg-border" aria-hidden="true"></span>
+      <button type="button" class="rounded px-2 py-1 text-xs text-muted hover:text-fg"
+              title="Reload preview" aria-label="Reload preview" (click)="refresh()">↻ Refresh</button>
+      <button type="button" class="rounded px-2 py-1 text-xs text-muted hover:text-fg"
+              [attr.aria-pressed]="fullscreen()"
+              [title]="fullscreen() ? 'Exit full screen (Esc)' : 'Full screen preview'"
+              (click)="toggleFullscreen()">{{ fullscreen() ? '✕ Exit (Esc)' : '⛶ Full screen' }}</button>
+    </div>
+  </div>
+
+  <div class="min-h-0 flex-1 overflow-auto bg-sidebar p-2">
+    <!--
+      SECURITY: sandbox has allow-scripts ONLY. Never add allow-same-origin (it would give the
+      generated code this app's origin, token and DOM), allow-top-navigation, allow-popups or allow-forms.
+      The document is assigned to the srcdoc property from preview-panel.ts.
+    -->
+    <iframe #frame title="Website preview" sandbox="allow-scripts" referrerpolicy="no-referrer"
+            class="mx-auto block h-full max-w-full rounded bg-white shadow-lg"
+            [style.width]="device().width"></iframe>
+  </div>
+</div>

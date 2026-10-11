@@ -1,0 +1,13 @@
+<div #container class="absolute inset-0"></div>
+
+@if (status() === 'loading') {
+  <div class="absolute inset-0 grid place-items-center bg-app text-sm text-muted">Loading editor…</div>
+} @else if (status() === 'error') {
+  <div class="absolute inset-0 grid place-items-center bg-app p-4 text-center" role="alert">
+    <div>
+      <p class="text-sm text-danger">The code editor could not be loaded.</p>
+      <p class="mt-1 text-xs text-muted">Check that the Monaco files were copied (angular.json) and restart ng serve.</p>
+      <button type="button" class="btn btn-ghost btn-sm mt-3" (click)="retry()">Try again</button>
+    </div>
+  </div>
+}

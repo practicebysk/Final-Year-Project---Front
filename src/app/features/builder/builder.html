@@ -1,0 +1,83 @@
+@if (project(); as p) {
+  <div class="flex h-dvh flex-col bg-app">
+    <app-header>
+      <a routerLink="/dashboard" class="text-sm text-muted hover:text-fg" aria-label="Back to projects">←</a>
+      <span class="truncate text-sm font-medium">{{ p.name }}</span>
+      <span class="hidden text-xs sm:inline"
+            [class]="saveError() ? 'text-danger' : dirty() ? 'text-muted' : 'text-success'">
+        {{ saveError() ?? (dirty() ? 'Unsaved changes' : 'All changes saved') }}
+      </span>
+      <span class="flex-1"></span>
+      <button type="button" class="btn btn-primary btn-sm" [disabled]="!dirty() || saving() || busy()"
+              title="Save (Ctrl+S)" (click)="save()">{{ saving() ? 'Saving…' : 'Save' }}</button>
+      <button type="button" class="btn btn-ghost btn-sm" [disabled]="!dirty() || saving() || busy()"
+              title="Discard unsaved changes" (click)="confirmingReset.set(true)">Reset</button>
+      <button type="button" class="btn btn-ghost btn-sm" [disabled]="busy() || saving()"
+              title="View and restore earlier versions" (click)="historyOpen.set(true)">History</button>
+      <button type="button" class="btn btn-ghost btn-sm hidden sm:inline-flex" (click)="focusAssistant()">✨ AI Modify</button>
+      <button type="button" class="btn btn-ghost btn-sm" [disabled]="downloading() || busy()"
+              title="Download the website as a ZIP: index.html, style.css, script.js and images" (click)="download()">
+        <span class="hidden sm:inline">{{ downloading() ? 'Preparing…' : 'Download Website' }}</span>
+        <span class="sm:hidden">{{ downloading() ? '…' : 'ZIP' }}</span>
+      </button>
+    </app-header>
+
+    <!-- Mobile/tablet: switch between code and preview -->
+    <div class="flex shrink-0 border-b border-border bg-sidebar lg:hidden" role="tablist">
+      @for (t of mobileTabs; track t.id) {
+        <button type="button" role="tab" class="flex-1 py-2 text-sm"
+                [attr.aria-selected]="mobileTab() === t.id"
+                [class]="mobileTab() === t.id ? 'border-b-2 border-primary text-fg' : 'text-muted'"
+                (click)="mobileTab.set(t.id)">{{ t.label }}</button>
+      }
+    </div>
+
+    <main class="flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[14rem_minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-1">
+      <aside class="hidden min-h-0 flex-col overflow-y-auto border-r border-border bg-sidebar lg:flex">
+        <div class="flex h-10 shrink-0 items-center border-b border-border px-3 text-xs font-medium uppercase tracking-wide text-muted">Files</div>
+        <app-file-tree [files]="files()" [activeFile]="activeName()" [modified]="modifiedNames()"
+                       (fileSelected)="activeName.set($event)" />
+        <app-project-info [project]="p" />
+      </aside>
+
+      <section class="min-h-0 min-w-0 flex-col border-border lg:border-r" [class]="panel('code')">
+        <!-- Editor tabs: index.html | style.css | script.js -->
+        <div class="shrink-0 border-b border-border bg-sidebar">
+          <app-file-tree layout="tabs" [files]="files()" [activeFile]="activeName()" [modified]="modifiedNames()"
+                         (fileSelected)="activeName.set($event)" />
+        </div>
+        <app-code-editor class="min-h-0 flex-1" [value]="activeFile().content" [language]="activeFile().language"
+                         [readOnly]="busy()" (valueChange)="updateActive($event)" />
+      </section>
+
+      <section class="min-h-0 min-w-0 flex-col" [class]="panel('preview')">
+        <app-preview-panel class="min-h-0 flex-1" [html]="html()" [css]="css()" [js]="js()" />
+      </section>
+    </main>
+
+    <app-ai-assistant-bar class="shrink-0 border-t border-border bg-sidebar" [busy]="busy()"
+                          [message]="assistantMessage()" [isError]="assistantError()"
+                          (submitted)="onAssistantSubmit($event)" />
+  </div>
+
+  @if (confirmingReset()) {
+    <app-confirm-dialog title="Reset changes?"
+      message="All unsaved changes in the three files will be discarded and the last saved version restored."
+      confirmLabel="Reset changes" (confirmed)="confirmReset()" (cancelled)="confirmingReset.set(false)" />
+  }
+
+  <!-- Must stay INSIDE this @if, because it uses "p" -->
+  @if (historyOpen()) {
+    <app-version-history [projectId]="p.id" [hasUnsavedChanges]="dirty()"
+                         (closed)="historyOpen.set(false)" (restored)="onRestored($event)" />
+  }
+} @else if (loading()) {
+  <p class="p-8 text-muted">Loading project…</p>
+} @else {
+  <div class="grid min-h-screen place-items-center p-4 text-center">
+    <div>
+      <p class="text-lg font-medium">{{ loadError() ?? 'Project not found' }}</p>
+      <a routerLink="/dashboard" class="btn btn-primary mt-4">Back to projects</a>
+    </div>
+  </div>
+}

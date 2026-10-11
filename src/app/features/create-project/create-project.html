@@ -1,0 +1,122 @@
+<app-header />
+<main class="mx-auto max-w-6xl p-4 sm:p-8">
+  <a routerLink="/dashboard" class="text-sm text-muted hover:text-fg">← Back to projects</a>
+  <h1 class="mb-6 mt-2 text-2xl font-semibold">Generate a new website</h1>
+
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate
+          class="space-y-4 rounded-xl border border-border bg-card p-4 sm:p-6">
+
+      <!-- A disabled fieldset locks every input while the AI is working -->
+      <fieldset [disabled]="busy()" class="m-0 min-w-0 space-y-4 border-0 p-0">
+        <div>
+          <app-field label="Describe your website" [error]="err('freePrompt', 'Description')">
+            <textarea class="input" rows="5" formControlName="freePrompt"
+                      placeholder="Create a modern luxury salon website with a booking section and a gallery."></textarea>
+          </app-field>
+          <p class="mt-1 text-xs text-muted">Optional. The details below are added to this description.</p>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <app-field label="Business type">
+              <select class="input" formControlName="businessType">
+                @for (t of businessTypes; track t) { <option [value]="t">{{ t }}</option> }
+              </select>
+            </app-field>
+          </div>
+          <div>
+            <app-field label="Business name" [error]="err('businessName', 'Business name')">
+              <input class="input" formControlName="businessName" placeholder="Royal Beauty Salon" />
+            </app-field>
+          </div>
+        </div>
+
+        <div>
+          <app-field label="Project name (optional)" [error]="err('projectName', 'Project name')">
+            <input class="input" formControlName="projectName" placeholder="Defaults to the business name" />
+          </app-field>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <app-field label="Address" [error]="err('address', 'Address')">
+              <input class="input" formControlName="address" placeholder="Vesu, Surat" />
+            </app-field>
+          </div>
+          <div>
+            <app-field label="Phone" [error]="err('phone', 'Phone')">
+              <input class="input" formControlName="phone" placeholder="9876543210" />
+            </app-field>
+          </div>
+        </div>
+
+        <div>
+          <app-field label="Email" [error]="err('email', 'Email')">
+            <input class="input" type="email" formControlName="email" placeholder="hello@royalsalon.com" />
+          </app-field>
+        </div>
+
+        <div>
+          <app-field label="Services (one per line)" [error]="err('services', 'Services')">
+            <textarea class="input" rows="4" formControlName="services" placeholder="Haircut&#10;Hair Spa&#10;Facial"></textarea>
+          </app-field>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <app-field label="Theme" [error]="err('theme', 'Theme')">
+              <input class="input" formControlName="theme" placeholder="Luxury, dark" />
+            </app-field>
+          </div>
+          <div>
+            <app-field label="Preferred colors" [error]="err('colors', 'Colors')">
+              <input class="input" formControlName="colors" placeholder="Black, gold and white" />
+            </app-field>
+          </div>
+        </div>
+
+        <div>
+          <app-field label="Additional requirements (optional)" [error]="err('notes', 'Requirements')">
+            <textarea class="input" rows="3" formControlName="notes"
+                      placeholder="Include a booking form, testimonials and an opening-hours section"></textarea>
+          </app-field>
+        </div>
+      </fieldset>
+
+      @if (phase() !== 'idle') {
+        <div class="flex items-start gap-3 rounded-lg border border-primary/40 bg-primary/10 p-4" role="status" aria-live="polite">
+          <span class="mt-0.5 h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+          <div>
+            <p class="text-sm font-medium">
+              {{ phase() === 'generating' ? 'Generating your website with AI…' : 'Saving your project…' }}
+            </p>
+            <p class="mt-0.5 text-xs text-muted">
+              {{ phase() === 'generating' ? 'This usually takes 15 to 60 seconds. Please keep this page open.' : 'Almost done.' }}
+            </p>
+          </div>
+        </div>
+      }
+
+      @if (serverError()) {
+        <p class="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">{{ serverError() }}</p>
+      }
+
+      <div class="flex flex-wrap gap-2">
+        @if (pendingSave()) {
+          <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="retrySave()">Retry saving</button>
+        }
+        <button type="submit" class="btn w-full sm:w-auto" [class]="pendingSave() ? 'btn-ghost' : 'btn-primary'" [disabled]="busy()">
+          {{ phase() === 'generating' ? 'Generating…' : phase() === 'saving' ? 'Saving…' : 'Generate website' }}
+        </button>
+      </div>
+    </form>
+
+    <aside class="h-fit rounded-xl border border-border bg-card p-4 sm:p-6">
+      <h2 class="mb-1 text-sm font-semibold">Prompt preview</h2>
+      <p class="mb-3 text-xs text-muted">This text is sent to the AI through your server.</p>
+      <pre class="whitespace-pre-wrap rounded-lg bg-app p-3 font-mono text-xs leading-5 text-muted">{{ promptPreview() }}</pre>
+      <p class="mt-2 text-right text-xs text-muted">{{ promptPreview().length }} / {{ maxPrompt }} characters</p>
+    </aside>
+  </div>
+</main>

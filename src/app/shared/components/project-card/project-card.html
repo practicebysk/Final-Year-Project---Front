@@ -1,0 +1,23 @@
+<article class="flex h-full flex-col rounded-xl border border-border bg-card transition hover:border-primary">
+  <a [routerLink]="['/projects', project().id]" class="group block p-4" [attr.aria-label]="'Open ' + project().name">
+    <div class="mb-4 grid h-24 place-items-center rounded-lg bg-linear-to-br from-primary/30 to-secondary/30 text-3xl font-bold">
+      {{ initials() }}
+    </div>
+    <h3 class="truncate font-medium group-hover:text-primary" [title]="project().name">{{ project().name }}</h3>
+    <p class="mt-0.5 truncate text-sm text-muted" [title]="project().businessName">{{ project().businessName }}</p>
+    <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+      <span class="rounded-full bg-app px-2 py-0.5 text-secondary">{{ project().businessType }}</span>
+      <span>Updated {{ project().updatedAt | date: 'mediumDate' }}</span>
+    </div>
+  </a>
+
+  <div class="mt-auto flex flex-wrap items-center gap-1 border-t border-border p-2">
+    <a [routerLink]="['/projects', project().id]" class="btn btn-primary btn-sm">Open</a>
+    <button type="button" class="btn btn-ghost btn-sm" (click)="renameRequested.emit(project())">Rename</button>
+    <button type="button" class="btn btn-ghost btn-sm" [disabled]="duplicating()" (click)="duplicateRequested.emit(project())">
+      {{ duplicating() ? 'Copying…' : 'Duplicate' }}
+    </button>
+    <button type="button" class="ml-auto rounded-md px-2 py-1 text-xs text-muted hover:bg-danger/10 hover:text-danger"
+            [attr.aria-label]="'Delete ' + project().name" (click)="deleteRequested.emit(project())">Delete</button>
+  </div>
+</article>

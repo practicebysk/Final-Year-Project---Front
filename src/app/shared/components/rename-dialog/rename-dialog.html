@@ -1,0 +1,25 @@
+<div class="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" (click)="cancel()">
+  <form role="dialog" aria-modal="true" aria-labelledby="rename-title" novalidate
+        class="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-2xl"
+        (click)="$event.stopPropagation()" (submit)="submit($event)">
+    <h2 id="rename-title" class="text-lg font-semibold">Rename project</h2>
+
+    <label class="mt-3 block">
+      <span class="mb-1.5 block text-sm font-medium">Project name</span>
+      <input #box class="input" type="text" [attr.maxlength]="maxName" autocomplete="off"
+             [value]="name()" [disabled]="busy()" (input)="name.set(box.value)" />
+    </label>
+    @if (!valid()) {
+      <p class="mt-1 text-xs text-danger" role="alert">Project name is required</p>
+    }
+
+    @if (error()) {
+      <p class="mt-3 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">{{ error() }}</p>
+    }
+
+    <div class="mt-5 flex justify-end gap-2">
+      <button type="button" class="btn btn-ghost" [disabled]="busy()" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="!valid() || busy()">{{ busy() ? 'Saving…' : 'Rename' }}</button>
+    </div>
+  </form>
+</div>

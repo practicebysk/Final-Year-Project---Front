@@ -1,0 +1,17 @@
+<ul [class]="layout() === 'tabs' ? 'flex gap-1 overflow-x-auto p-1' : 'space-y-1 p-2'" role="list">
+  @for (f of files(); track f.name) {
+    <li class="shrink-0">
+      <button type="button"
+              class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition"
+              [class]="f.name === activeFile() ? 'bg-primary/20 text-fg' : 'text-muted hover:bg-card hover:text-fg'"
+              [attr.aria-current]="f.name === activeFile() ? 'true' : null"
+              (click)="fileSelected.emit(f.name)">
+        <span class="w-9 rounded bg-card px-1 text-center text-[10px] font-bold uppercase text-secondary">{{ badge(f.language) }}</span>
+        {{ f.name }}
+        @if (modified().includes(f.name)) {
+          <span class="ml-auto h-2 w-2 rounded-full bg-primary" title="Unsaved changes" aria-label="Unsaved changes"></span>
+        }
+      </button>
+    </li>
+  }
+</ul>

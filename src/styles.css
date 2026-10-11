@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-app: #0F172A;
+  --color-sidebar: #111827;
+  --color-card: #1E293B;
+  --color-primary: #6366F1;
+  --color-secondary: #8B5CF6;
+  --color-fg: #F8FAFC;
+  --color-muted: #94A3B8;
+  --color-border: #334155;
+  --color-success: #22C55E;
+  --color-danger: #EF4444;
+}
+
+@layer base {
+  html, body { height: 100%; }
+  body {
+    background: var(--color-app);
+    color: var(--color-fg);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-lg border border-border bg-app px-3 py-2 text-sm text-fg placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  .btn-primary { @apply bg-primary text-white hover:bg-secondary; }
+  .btn-ghost { @apply border border-border text-fg hover:bg-card; }
+}
